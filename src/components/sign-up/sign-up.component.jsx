@@ -1,60 +1,50 @@
 import React from 'react';
+import { connect } from 'react-redux';
+import { createStructuredSelector } from 'reselect';
 
 import FormInput from '../form-input/form-input.component';
 import CustomButton from '../custom-button/custom-button.component';
 
-import { auth, createUserProfileDocument } from '../../firebase/firebase.utils';
+import { setSignUpInfo, signUpStart } from '../../redux/user/user.actions';
+import { selectUserSignUpInfo } from '../../redux/user/user.selectors';
 
 import './sign-up.styles.scss';
 
 class SignUp extends React.Component {
-  constructor() {
-    super();
-
-    this.state = {
-      displayName: '',
-      email: '',
-      password: '',
-      confirmPassword: ''
-    };
-  }
-
   handleSubmit = async event => {
     event.preventDefault();
 
-    const { displayName, email, password, confirmPassword } = this.state;
+    const {
+      displayName,
+      email,
+      password,
+      confirmPassword
+    } = this.props.signUpInfo;
 
     if (password !== confirmPassword) {
       alert("passwords don't Match");
       return;
     }
 
-    try {
-      const { user } = await auth.createUserWithEmailAndPassword(
-        email,
-        password
-      );
-
-      await createUserProfileDocument(user, { displayName });
-      this.setState({
-        displayName: '',
-        email: '',
-        password: '',
-        confirmPassword: ''
-      });
-    } catch (error) {
-      console.error(error);
-    }
+    this.props.signUpStart({ email, password, displayName });
   };
 
   handleChange = event => {
+    const { signUpInfo, setSignUpInfo } = this.props;
     const { name, value } = event.target;
-
-    this.setState({ [name]: value });
+    console.log(signUpInfo);
+    setSignUpInfo({ ...signUpInfo, [name]: value });
   };
 
   render() {
-    const { displayName, email, password, confirmPassword } = this.state;
+    const {
+      displayName,
+      email,
+      password,
+      confirmPassword
+    } = this.props.signUpInfo;
+    console.log(this.props.signUpInfo);
+
     return (
       <div className="sign-up">
         <h2 className="title">I do not have an account</h2>
@@ -100,4 +90,16 @@ class SignUp extends React.Component {
   }
 }
 
-export default SignUp;
+const mapStateToProps = createStructuredSelector({
+  signUpInfo: selectUserSignUpInfo
+});
+
+const mapDispatchToProps = dispatch => ({
+  setSignUpInfo: userCredentials => dispatch(setSignUpInfo(userCredentials)),
+  signUpStart: userCredentials => dispatch(signUpStart(userCredentials))
+});
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(SignUp);
